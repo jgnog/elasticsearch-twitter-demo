@@ -66,7 +66,7 @@ def process_api_response(json_response):
 
 def main():
 
-    with open('data_authors', 'r') as f:
+    with open('authors', 'r') as f:
         authors_list = f.readlines()
 
     for author in authors_list:
