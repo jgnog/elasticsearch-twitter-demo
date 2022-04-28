@@ -26,10 +26,18 @@ search_parser.add_argument('--output-format', '-o',
     default='human',
     help='The output format of the matches'
 )
+
 search_parser.add_argument('--highlight',
     action='store_true',
     help='Whether the matched words or phrases should be highlighted in the output'
 )
+
+search_parser.add_argument('--match_type', '-m',
+    choices=['word', 'phrase'],
+    default='word',
+    help='Whether the search should be a simple word or phrase search'
+)
+
 
 config = configparser.RawConfigParser()
 config.read('config.ini')
@@ -102,11 +110,19 @@ def insert_tweets():
             for tweet in tweets:
                 es.index(index=MY_INDEX, document=tweet, id=tweet['id'])
 
-def search_tweets(query_string, output_format, highlight):
-    if highlight:
-        search_results = es.search(index=MY_INDEX, query={'match': {'text': query_string}}, highlight={'fields': {'text': {}}})
+def search_tweets(query_string, output_format, highlight, match_type):
+
+    if match_type == 'word':
+        query_body = {'match': {'text': query_string}}
     else:
-        search_results = es.search(index=MY_INDEX, query={'match': {'text': query_string}})
+        query_body = {'match_phrase': {'text': query_string}}
+
+    if highlight:
+        highlight_body = {'fields': {'text': {}}}
+    else:
+        highlight_body = None
+
+    search_results = es.search(index=MY_INDEX, query=query_body, highlight=highlight_body)
 
     if output_format == 'json':
         for hit in search_results['hits']['hits']:
@@ -135,7 +151,7 @@ def main():
     if args.subcommand == 'insert':
         insert_tweets()
     elif args.subcommand == 'search':
-        search_tweets(args.query_string, args.output_format, args.highlight)
+        search_tweets(args.query_string, args.output_format, args.highlight, args.match_type)
     else:
         # Not a valid invocation of the script
         # Print some help to the user
