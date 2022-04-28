@@ -5,6 +5,8 @@ from elasticsearch import Elasticsearch, helpers
 
 from pprint import pprint
 
+MY_INDEX = 'twitter-gnog'
+
 config = configparser.RawConfigParser()
 config.read('config.ini')
 
@@ -64,7 +66,7 @@ def process_api_response(json_response):
 
     return result
 
-def main():
+def insert_tweets():
 
     with open('authors', 'r') as f:
         authors_list = f.readlines()
@@ -74,7 +76,16 @@ def main():
         tweets = process_api_response(json_response)
         if tweets:
             for tweet in tweets:
-                es.index(index='twitter-gnog', document=tweet, id=tweet['id'])
+                es.index(index=MY_INDEX, document=tweet, id=tweet['id'])
+
+def search_tweets(query_string):
+    search_results = es.search(index=MY_INDEX, query={'match': {'text': query_string}})
+    for hit in search_results['hits']['hits']:
+        pprint(hit)
+
+def main():
+    insert_tweets()
+    search_tweets('data')
 
 if __name__ == "__main__":
     main()
