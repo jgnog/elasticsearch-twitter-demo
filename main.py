@@ -2,10 +2,24 @@ import requests
 import json
 import configparser
 from elasticsearch import Elasticsearch, helpers
+import argparse
 
 from pprint import pprint
 
 MY_INDEX = 'twitter-gnog'
+
+parser = argparse.ArgumentParser(
+        description='Insert tweets in Elasticsearch and search them'
+)
+
+subparsers = parser.add_subparsers(dest='subcommand')
+
+insert_parser = subparsers.add_parser('insert', help='Insert tweets into Elasticsearch')
+search_parser = subparsers.add_parser('search', help='Search tweets in Elasticsearch')
+
+search_parser.add_argument('query_string',
+    help='The string to search for in the corpus of tweets'
+)
 
 config = configparser.RawConfigParser()
 config.read('config.ini')
@@ -84,8 +98,15 @@ def search_tweets(query_string):
         pprint(hit)
 
 def main():
-    insert_tweets()
-    search_tweets('data')
+    args = parser.parse_args()
+    if args.subcommand == 'insert':
+        insert_tweets()
+    elif args.subcommand == 'search':
+        search_tweets(args.query_string)
+    else:
+        # Not a valid invocation of the script
+        # Print some help to the user
+        parser.print_usage()
 
 if __name__ == "__main__":
     main()
