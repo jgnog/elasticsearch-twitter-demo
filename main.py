@@ -26,6 +26,10 @@ search_parser.add_argument('--output-format', '-o',
     default='human',
     help='The output format of the matches'
 )
+search_parser.add_argument('--highlight',
+    action='store_true',
+    help='Whether the matched words or phrases should be highlighted in the output'
+)
 
 config = configparser.RawConfigParser()
 config.read('config.ini')
@@ -98,8 +102,12 @@ def insert_tweets():
             for tweet in tweets:
                 es.index(index=MY_INDEX, document=tweet, id=tweet['id'])
 
-def search_tweets(query_string, output_format):
-    search_results = es.search(index=MY_INDEX, query={'match': {'text': query_string}})
+def search_tweets(query_string, output_format, highlight):
+    if highlight:
+        search_results = es.search(index=MY_INDEX, query={'match': {'text': query_string}}, highlight={'fields': {'text': {}}})
+    else:
+        search_results = es.search(index=MY_INDEX, query={'match': {'text': query_string}})
+
     if output_format == 'json':
         for hit in search_results['hits']['hits']:
             pprint(hit)
@@ -115,7 +123,11 @@ def search_tweets(query_string, output_format):
             )
             print('Score:', hit['_score'])
             print('')
-            print(hit['_source']['text'])
+            if highlight:
+                for highlighted_text in hit['highlight']['text']:
+                    print(highlighted_text)
+            else:
+                print(hit['_source']['text'])
             print('')
 
 def main():
@@ -123,7 +135,7 @@ def main():
     if args.subcommand == 'insert':
         insert_tweets()
     elif args.subcommand == 'search':
-        search_tweets(args.query_string, args.output_format)
+        search_tweets(args.query_string, args.output_format, args.highlight)
     else:
         # Not a valid invocation of the script
         # Print some help to the user
