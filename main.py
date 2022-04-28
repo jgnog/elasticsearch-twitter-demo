@@ -21,6 +21,12 @@ search_parser.add_argument('query_string',
     help='The string to search for in the corpus of tweets'
 )
 
+search_parser.add_argument('--output-format', '-o',
+    choices=['json', 'human'],
+    default='human',
+    help='The output format of the matches'
+)
+
 config = configparser.RawConfigParser()
 config.read('config.ini')
 
@@ -92,17 +98,32 @@ def insert_tweets():
             for tweet in tweets:
                 es.index(index=MY_INDEX, document=tweet, id=tweet['id'])
 
-def search_tweets(query_string):
+def search_tweets(query_string, output_format):
     search_results = es.search(index=MY_INDEX, query={'match': {'text': query_string}})
-    for hit in search_results['hits']['hits']:
-        pprint(hit)
+    if output_format == 'json':
+        for hit in search_results['hits']['hits']:
+            pprint(hit)
+    elif output_format == 'human':
+        print('Number of matches:', search_results['hits']['total']['value'])
+        print('')
+        for i, hit in enumerate(search_results['hits']['hits']):
+            print('Match nr.', i+1)
+            print('Tweet by {author} at {timestamp}'.format(
+                author=hit['_source']['author_name'],
+                timestamp=hit['_source']['created_at']
+                )
+            )
+            print('Score:', hit['_score'])
+            print('')
+            print(hit['_source']['text'])
+            print('')
 
 def main():
     args = parser.parse_args()
     if args.subcommand == 'insert':
         insert_tweets()
     elif args.subcommand == 'search':
-        search_tweets(args.query_string)
+        search_tweets(args.query_string, args.output_format)
     else:
         # Not a valid invocation of the script
         # Print some help to the user
