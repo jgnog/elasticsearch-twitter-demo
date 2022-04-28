@@ -72,7 +72,9 @@ def main():
     for author in authors_list:
         json_response = search_recent_tweets_by_user(author)
         tweets = process_api_response(json_response)
-        pprint(tweets)
+        if tweets:
+            for tweet in tweets:
+                es.index(index='twitter-gnog', document=tweet, id=tweet['id'])
 
 if __name__ == "__main__":
     main()
