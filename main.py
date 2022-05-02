@@ -1,3 +1,21 @@
+"""
+This is a possible solution to the challenge proposed. It defines a command-line
+interface with two subcommands:
+
+    - insert: triggers the code to contact the Twitter API and insert the
+    tweets in Elasticsearch
+    - search: allows the user to search for a string in the corpus of tweets
+    stored in Elasticsearch
+
+The search subcommand has various option that allow the user to control the output
+format, the type of match and if the matches should be highlighted or not.
+
+There is also a help page that can be shown by running
+
+> python main.py --help
+
+This solution does not include the use of a non-standard text analyzer.
+"""
 import requests
 import json
 import configparser
