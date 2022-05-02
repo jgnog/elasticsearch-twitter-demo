@@ -126,7 +126,7 @@ def search_tweets(query_string, output_format, highlight, match_type):
 
     if output_format == 'json':
         for hit in search_results['hits']['hits']:
-            pprint(hit)
+            print(json.dumps(hit))
     elif output_format == 'human':
         print('Number of matches:', search_results['hits']['total']['value'])
         print('')
